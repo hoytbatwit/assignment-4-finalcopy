@@ -1,0 +1,6 @@
+*.o
+level1/test_files
+level2/test_files1
+level2/test_files2
+level2/test_files3
+level3/level3
