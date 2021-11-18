@@ -13,49 +13,50 @@ struct files_t* files_open(char* path, int buffer_size) {
         return NULL;
     }
     open_ds = malloc(sizeof(struct files_t));
-    char *buffer[buffer_size];
     open_ds->fd = fd;
     open_ds->ib_size = buffer_size;
     open_ds->ib_position = 0;
     open_ds->position =  0;
     open_ds->ib_left =  0;
-    open_ds->internal_buffer = *buffer;
     return open_ds;
 }
 
 enum files_status files_read(struct files_t* file, char* buffer, int bufflen) {
+    //first we get signal so we know how to handel the file
     int sig = read(file->fd, buffer, bufflen);
-    
-    //end of file(still buffer space left)
+    //end of the file was reached
     if(sig == 0)
     {
-        file->ib_left = file->ib_size;
         memcpy(buffer, file, bufflen);
-        file->ib_position = file->ib_left - bufflen;
         file->position = bufflen;
+        file->ib_left = file->ib_left - bufflen;
+        file->ib_position = bufflen;
+        //files_read(file, buffer, bufflen);
         return FILES_EOF;
     }
-    //filled buffer
+    //file was read and matched length of the buffer
     else if(sig == bufflen)
     {
+        file->internal_buffer= buffer;
         file->ib_left = file->ib_size;
         memcpy(buffer, file, bufflen);
-        file->ib_position = file->ib_left - bufflen;
         file->position = bufflen;
+        file->ib_left = file->ib_left - bufflen;
+        file->ib_position = bufflen;
         return FILES_OK;
     }
-    //Improper arguments passed in
+    //Still space in buffer but the file has been read completly
     else if(sig < bufflen)
     {
-        file->ib_left = file->ib_size;
         memcpy(buffer, file, bufflen);
-        file->ib_position = file->ib_left - bufflen;
         file->position = bufflen;
+        file->ib_left = file->ib_left - bufflen;
+        file->ib_position = bufflen;
+        files_read(file, buffer, bufflen);
         return FILES_ERR_ARGS;
     }
     //Unspecified error ocured
     return FILES_ERR_OTHER;
-
 }
 
 void files_close(struct files_t* file) {
