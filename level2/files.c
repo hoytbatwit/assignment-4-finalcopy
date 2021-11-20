@@ -25,7 +25,7 @@ struct files_t* files_open(char* path, int buffer_size) {
 }
 
 enum files_status files_read(struct files_t* file, char* buffer, int bufflen) {
-    //first we get signal so we know how to handel the file
+   //first we get signal so we know how to handel the file
     int sig = read(file->fd, file->internal_buffer, bufflen);
     //setting the buffer to full
     file->ib_left = bufflen;
@@ -33,17 +33,25 @@ enum files_status files_read(struct files_t* file, char* buffer, int bufflen) {
     memcpy(buffer, file->internal_buffer, bufflen);
     //updating all the other values insise the struct
     file->position = file->position + sig;
-    file->ib_left = file->ib_left - bufflen;
+    
+    
     if(file->ib_size % bufflen != 0)
     {
-        file->ib_position = file->ib_size - bufflen;
+        file->ib_left = file->ib_left - bufflen;
+    }
+    else
+    {
+        file->ib_left = file->ib_left - bufflen;
+    }
+    
+    if(file->ib_size % bufflen != 0)
+    {
+        file->ib_position = file->ib_position + file->position;
     }
     else
     {
         file->ib_position = file->ib_size;
     }
-    
-    
     //end of the file was reached
     if(sig == 0)
     {
